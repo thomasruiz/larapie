@@ -1,6 +1,6 @@
 <?php
 
-namespace Larapi\Contracts;
+namespace Larapie\Contracts;
 
 use Illuminate\Database\Eloquent\Model;
 

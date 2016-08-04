@@ -1,11 +1,11 @@
 <?php
 
-namespace Larapi;
+namespace Larapie;
 
 use Illuminate\Support\ServiceProvider;
-use Larapi\Http\Routing;
+use Larapie\Http\Routing;
 
-class LarapiServiceProvider extends ServiceProvider
+class LarapieServiceProvider extends ServiceProvider
 {
     public function register()
     {
@@ -17,9 +17,9 @@ class LarapiServiceProvider extends ServiceProvider
             $config = $this->app->make('config');
 
             $routing = new Routing($this->app->make('router'));
-            $normalizedConfig = $routing->registerRoutes($config->get('larapi'));
+            $normalizedConfig = $routing->registerRoutes($config->get('larapie'));
 
-            $config->set('larapi', $normalizedConfig);
+            $config->set('larapie', $normalizedConfig);
         }
     }
 }

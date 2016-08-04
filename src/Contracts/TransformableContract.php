@@ -1,11 +1,11 @@
 <?php
 
-namespace Larapi\Contracts;
+namespace Larapie\Contracts;
 
 interface TransformableContract
 {
     /**
-     * @return \Larapi\Contracts\TransformerContract
+     * @return \Larapie\Contracts\TransformerContract
      */
     public function getTransformerClass();
 }

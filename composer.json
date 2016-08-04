@@ -1,5 +1,5 @@
 {
-    "name": "larapi/larapi",
+    "name": "thomasruiz/larapie",
     "description": "Expose your models through an api in a minute!",
     "type": "library",
     "license": "MIT",
@@ -21,12 +21,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Larapi\\": "src/"
+            "Larapie\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "LarapiTests\\": "tests"
+            "LarapieTests\\": "tests"
         }
     }
 }

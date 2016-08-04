@@ -1,13 +1,13 @@
 <?php
 
-namespace Larapi\Http;
+namespace Larapie\Http;
 
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Routing\ResponseFactory;
 use Illuminate\Support\Collection;
-use Larapi\Contracts\TransformableContract;
+use Larapie\Contracts\TransformableContract;
 
 class Controller extends BaseController
 {
@@ -26,7 +26,7 @@ class Controller extends BaseController
     public function __construct(Request $request, Repository $config, ResponseFactory $responseFactory)
     {
         $this->request = $request;
-        $this->config = $config->get('larapi');
+        $this->config = $config->get('larapie');
         $this->responseFactory = $responseFactory;
 
         if ($request->route()) {

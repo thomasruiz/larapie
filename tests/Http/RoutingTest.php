@@ -1,12 +1,12 @@
 <?php
 
-namespace LarapiTests\Http;
+namespace LarapieTests\Http;
 
 use Illuminate\Routing\Router;
-use Larapi\Http\Controller;
-use Larapi\Http\Routing;
-use Larapi\LarapiException;
-use LarapiTests\TestCase;
+use Larapie\Http\Controller;
+use Larapie\Http\Routing;
+use Larapie\LarapieException;
+use LarapieTests\TestCase;
 use Mockery;
 use stdClass;
 
@@ -84,7 +84,7 @@ class RoutingTest extends TestCase
 
     public function testRegisterNestedResourceWithUnknownParent()
     {
-        $this->expectException(LarapiException::class);
+        $this->expectException(LarapieException::class);
         $this->expectExceptionMessage('Unable to register nested resource: unknown parent `user`. You can add it to ' .
                                       'the configuration file with the option `disable_routing` set to true if you ' .
                                       'don\'t need the routes.');

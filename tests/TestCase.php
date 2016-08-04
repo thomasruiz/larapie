@@ -1,6 +1,6 @@
 <?php
 
-namespace LarapiTests;
+namespace LarapieTests;
 
 use Mockery;
 use PHPUnit\Framework\TestCase as BaseTestCase;

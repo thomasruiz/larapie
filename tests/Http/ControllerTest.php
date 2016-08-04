@@ -1,12 +1,12 @@
 <?php
 
-namespace LarapiTests\Http;
+namespace LarapieTests\Http;
 
 use Illuminate\Config\Repository;
 use Illuminate\Http\Request;
 use Illuminate\Routing\ResponseFactory;
-use Larapi\Http\Controller;
-use LarapiTests\TestCase;
+use Larapie\Http\Controller;
+use LarapieTests\TestCase;
 use Mockery;
 
 class ControllerTest extends TestCase
@@ -268,7 +268,7 @@ class ControllerTest extends TestCase
 
     protected function mockConfig($config)
     {
-        return $this->config->shouldReceive('get')->with('larapi')->andReturn($config);
+        return $this->config->shouldReceive('get')->with('larapie')->andReturn($config);
     }
 
     protected function mockRouteName($name)

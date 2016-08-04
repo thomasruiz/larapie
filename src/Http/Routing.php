@@ -1,9 +1,9 @@
 <?php
 
-namespace Larapi\Http;
+namespace Larapie\Http;
 
 use Illuminate\Routing\Router;
-use Larapi\LarapiException;
+use Larapie\LarapieException;
 
 class Routing
 {
@@ -35,7 +35,7 @@ class Routing
         if (is_string($config)) {
             $config = ['model' => $config];
         } elseif (! isset($config['model'])) {
-            throw new LarapiException('Unable to register the resource: model missing.');
+            throw new LarapieException('Unable to register the resource: model missing.');
         }
 
         $config = $this->removeDisabledOptions($config);
@@ -66,7 +66,7 @@ class Routing
 
         foreach ($resources as $resource) {
             if (! isset($config[ $resource ])) {
-                throw new LarapiException("Unable to register nested resource: unknown parent `$resource`. You can " .
+                throw new LarapieException("Unable to register nested resource: unknown parent `$resource`. You can " .
                                           "add it to the configuration file with the option `disable_routing` set " .
                                           "to true if you don't need the routes.");
             }
