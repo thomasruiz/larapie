@@ -1,0 +1,32 @@
+{
+    "name": "larapi/larapi",
+    "description": "Expose your models through an api in a minute!",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Thomas Ruiz",
+            "email": "thomas.ruiz@neoxia.com"
+        }
+    ],
+    "require": {
+        "illuminate/config": "~5.2",
+        "illuminate/routing": "~5.2",
+        "illuminate/support": "~5.2",
+        "illuminate/database": "^5.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~5.4",
+        "mockery/mockery": "^0.9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Larapi\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LarapiTests\\": "tests"
+        }
+    }
+}
