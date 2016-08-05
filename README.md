@@ -3,6 +3,11 @@ Expose your models through an api in a minute!
 
 So that's still in "beta", but not for long, 'coz it's working pretty well.
 
+## Requirements
+
+- PHP 5.6
+- Laravel 5.1
+
 ## Installation
 
 Install from composer:
@@ -64,3 +69,11 @@ return [
 ```
 
 And everything is ready!
+
+
+## Checklist
+
+- [ ] API versioning
+- [ ] JWT bundled in
+- [ ] Pagination, ordering and filters on `index` route
+- [ ] Use of Laravel Policies
