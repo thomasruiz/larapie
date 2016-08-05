@@ -40,7 +40,10 @@ class Routing
 
         $config = $this->removeDisabledOptions($config);
 
-        $defaults = ['router_options' => [], 'disable_routing' => false];
+        $defaults = [
+            'router_options'  => [],
+            'disable_routing' => false,
+        ];
 
         return $config + $defaults;
     }
@@ -52,9 +55,9 @@ class Routing
 
     protected function removeDisabledOptions($config)
     {
-        if (isset($config['router_options']['names'])) {
-            unset($config['router_options']['names']);
-        }
+        $config = $this->clearRouterOptionNames($config);
+        $config = $this->validateRouterOptionOnly($config);
+        $config = $this->validateRouterOptionExcept($config);
 
         return $config;
     }
@@ -66,10 +69,69 @@ class Routing
 
         foreach ($resources as $resource) {
             if (! isset($config[ $resource ])) {
-                throw new LarapieException("Unable to register nested resource: unknown parent `$resource`. You can " .
-                                          "add it to the configuration file with the option `disable_routing` set " .
-                                          "to true if you don't need the routes.");
+                throw new LarapieException(
+                    "Unable to register nested resource: unknown parent `$resource`. You can " .
+                    "add it to the configuration file with the option `disable_routing` set " .
+                    "to true if you don't need the routes."
+                );
             }
         }
+    }
+
+    protected function clearRouterOptionNames($config)
+    {
+        if (isset($config['router_options']['names'])) {
+            unset($config['router_options']['names']);
+        }
+
+        return $config;
+    }
+
+    protected function validateRouterOptionOnly($config)
+    {
+        if (isset($config['router_options']['only'])) {
+            $config['router_options']['only'] = $this->ensureArrayValue($config['router_options']['only']);
+
+            $finalOnlyConfig = $this->clearInvalidOnlyOptions($config);
+
+            if (count($finalOnlyConfig) === 0) {
+                $config['disable_routing'] = true;
+            } else {
+                $config['router_options']['only'] = $finalOnlyConfig;
+            }
+        }
+
+        return $config;
+    }
+
+    protected function clearInvalidOnlyOptions($config)
+    {
+        $result = [];
+        foreach ($config['router_options']['only'] as $item) {
+            if (! in_array($item, ['create', 'edit'])) {
+                $result[] = $item;
+            }
+        }
+
+        return $result;
+    }
+
+    protected function validateRouterOptionExcept($config)
+    {
+        $config['router_options']['except'] = empty($config['router_options']['except'])
+            ? [] : $this->ensureArrayValue($config['router_options']['except']);
+
+        $config['router_options']['except'] += ['create', 'edit'];
+
+        return $config;
+    }
+
+    protected function ensureArrayValue($value)
+    {
+        if (is_string($value)) {
+            return [$value];
+        }
+
+        return $value;
     }
 }

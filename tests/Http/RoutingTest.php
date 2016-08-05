@@ -16,16 +16,28 @@ class RoutingTest extends TestCase
     {
         $config = ['resources' => ['user' => stdClass::class, 'foo' => stdClass::class]];
         $routerMock = Mockery::mock(Router::class);
-        $routerMock->shouldReceive('resource')->with('user', Controller::class, [])->once();
-        $routerMock->shouldReceive('resource')->with('foo', Controller::class, [])->once();
+        $routerMock->shouldReceive('resource')
+                   ->with('user', Controller::class, ['except' => ['create', 'edit']])
+                   ->once();
+        $routerMock->shouldReceive('resource')
+                   ->with('foo', Controller::class, ['except' => ['create', 'edit']])
+                   ->once();
 
         $routing = new Routing($routerMock);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertEquals(
             [
-                'user' => ['model' => stdClass::class, 'router_options' => [], 'disable_routing' => false],
-                'foo'  => ['model' => stdClass::class, 'router_options' => [], 'disable_routing' => false],
+                'user' => [
+                    'model'           => stdClass::class,
+                    'router_options'  => ['except' => ['create', 'edit']],
+                    'disable_routing' => false,
+                ],
+                'foo'  => [
+                    'model'           => stdClass::class,
+                    'router_options'  => ['except' => ['create', 'edit']],
+                    'disable_routing' => false,
+                ],
             ],
             $normalizedConfig['resources']
         );
@@ -35,16 +47,28 @@ class RoutingTest extends TestCase
     {
         $config = ['resources' => ['user' => stdClass::class, 'user.foo' => stdClass::class]];
         $routerMock = Mockery::mock(Router::class);
-        $routerMock->shouldReceive('resource')->with('user', Controller::class, [])->once();
-        $routerMock->shouldReceive('resource')->with('user.foo', Controller::class, [])->once();
+        $routerMock->shouldReceive('resource')
+                   ->with('user', Controller::class, ['except' => ['create', 'edit']])
+                   ->once();
+        $routerMock->shouldReceive('resource')
+                   ->with('user.foo', Controller::class, ['except' => ['create', 'edit']])
+                   ->once();
 
         $routing = new Routing($routerMock);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertEquals(
             [
-                'user'     => ['model' => stdClass::class, 'router_options' => [], 'disable_routing' => false],
-                'user.foo' => ['model' => stdClass::class, 'router_options' => [], 'disable_routing' => false],
+                'user'     => [
+                    'model'           => stdClass::class,
+                    'router_options'  => ['except' => ['create', 'edit']],
+                    'disable_routing' => false,
+                ],
+                'user.foo' => [
+                    'model'           => stdClass::class,
+                    'router_options'  => ['except' => ['create', 'edit']],
+                    'disable_routing' => false,
+                ],
             ],
             $normalizedConfig['resources']
         );
@@ -56,7 +80,7 @@ class RoutingTest extends TestCase
             'resources' => [
                 'user' => [
                     'model'           => stdClass::class,
-                    'router_options'  => [],
+                    'router_options'  => ['except' => ['create', 'edit']],
                     'disable_routing' => true,
                 ],
             ],
@@ -74,12 +98,14 @@ class RoutingTest extends TestCase
         $config = ['resources' => ['user' => ['model' => stdClass::class, 'router_options' => ['names' => []]]]];
 
         $routerMock = Mockery::mock(Router::class);
-        $routerMock->shouldReceive('resource')->with('user', Controller::class, [])->once();
+        $routerMock->shouldReceive('resource')
+                   ->with('user', Controller::class, ['except' => ['create', 'edit']])
+                   ->once();
 
         $routing = new Routing($routerMock);
         $normalizedConfig = $routing->registerRoutes($config);
 
-        $this->assertSame([], $normalizedConfig['resources']['user']['router_options']);
+        $this->assertSame(['except' => ['create', 'edit']], $normalizedConfig['resources']['user']['router_options']);
     }
 
     public function testRegisterNestedResourceWithUnknownParent()
