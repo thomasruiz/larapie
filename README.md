@@ -40,6 +40,9 @@ return [
     // DELETE /user/{id}
     'user' => App\User::class,
     
+    // Relationship
+    'user.foo' => App\Foo::class,
+    
     // More complex example
     'foo' => [
       // Mandatory
@@ -52,7 +55,10 @@ return [
         'only' => ['index', 'show'],
         'middleware' => ['auth'],
       ],
-    ]
+    ],
+    
+    // WON'T WORK, 'bar' model is unknown
+    'bar.foo' => App\Foo::class,
   ]
 ];
 ```
