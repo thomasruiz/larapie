@@ -296,33 +296,33 @@ class ModelStub
         return new self;
     }
 
-    public function all()
+    public static function all()
     {
         return 'all';
     }
 
-    public function find()
+    public static function find()
     {
         return new self;
     }
 
-    public function create()
+    public static function create()
     {
         return 'new model';
     }
 
-    public function update()
+    public static function update()
     {
     }
 
-    public function delete()
+    public static function delete()
     {
     }
 }
 
 class NotFoundModelStub
 {
-    public function find()
+    public static function find()
     {
         return null;
     }
