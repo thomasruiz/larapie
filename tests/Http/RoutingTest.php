@@ -3,9 +3,9 @@
 namespace LarapieTests\Http;
 
 use Illuminate\Routing\Router;
+use Larapie\Config\ConfigNormalizer;
 use Larapie\Http\Controller;
 use Larapie\Http\Routing;
-use Larapie\LarapieException;
 use LarapieTests\TestCase;
 use Mockery;
 use stdClass;
@@ -15,15 +15,10 @@ class RoutingTest extends TestCase
     public function testRegisterSimpleResources()
     {
         $config = ['resources' => ['user' => stdClass::class, 'foo' => stdClass::class]];
-        $routerMock = Mockery::mock(Router::class);
-        $routerMock->shouldReceive('resource')
-                   ->with('user', Controller::class, ['except' => ['create', 'edit']])
-                   ->once();
-        $routerMock->shouldReceive('resource')
-                   ->with('foo', Controller::class, ['except' => ['create', 'edit']])
-                   ->once();
+        $routerMock = $this->mockRouter($config);
+        $configNormalizerMock = new ConfigNormalizer();
 
-        $routing = new Routing($routerMock);
+        $routing = new Routing($routerMock, $configNormalizerMock);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertEquals(
@@ -46,15 +41,10 @@ class RoutingTest extends TestCase
     public function testRegisterNestedResource()
     {
         $config = ['resources' => ['user' => stdClass::class, 'user.foo' => stdClass::class]];
-        $routerMock = Mockery::mock(Router::class);
-        $routerMock->shouldReceive('resource')
-                   ->with('user', Controller::class, ['except' => ['create', 'edit']])
-                   ->once();
-        $routerMock->shouldReceive('resource')
-                   ->with('user.foo', Controller::class, ['except' => ['create', 'edit']])
-                   ->once();
+        $routerMock = $this->mockRouter($config);
+        $configNormalizerMock = new ConfigNormalizer();
 
-        $routing = new Routing($routerMock);
+        $routing = new Routing($routerMock, $configNormalizerMock);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertEquals(
@@ -86,39 +76,24 @@ class RoutingTest extends TestCase
             ],
         ];
         $routerMock = Mockery::mock(Router::class);
+        $configNormalizerMock = new ConfigNormalizer();
 
-        $routing = new Routing($routerMock);
+        $routing = new Routing($routerMock, $configNormalizerMock);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertSame($config, $normalizedConfig);
     }
 
-    public function testCustomNamedRoutesAreDisabled()
+    protected function mockRouter($config)
     {
-        $config = ['resources' => ['user' => ['model' => stdClass::class, 'router_options' => ['names' => []]]]];
-
-        $routerMock = Mockery::mock(Router::class);
-        $routerMock->shouldReceive('resource')
-                   ->with('user', Controller::class, ['except' => ['create', 'edit']])
-                   ->once();
-
-        $routing = new Routing($routerMock);
-        $normalizedConfig = $routing->registerRoutes($config);
-
-        $this->assertSame(['except' => ['create', 'edit']], $normalizedConfig['resources']['user']['router_options']);
-    }
-
-    public function testRegisterNestedResourceWithUnknownParent()
-    {
-        $this->expectException(LarapieException::class);
-        $this->expectExceptionMessage('Unable to register nested resource: unknown parent `user`. You can add it to ' .
-                                      'the configuration file with the option `disable_routing` set to true if you ' .
-                                      'don\'t need the routes.');
-
-        $config = ['resources' => ['user.foo' => stdClass::class]];
         $routerMock = Mockery::mock(Router::class);
 
-        $routing = new Routing($routerMock);
-        $routing->registerRoutes($config);
+        foreach ($config['resources'] as $resource => $value) {
+            $routerMock->shouldReceive('resource')
+                       ->with($resource, Controller::class, ['except' => ['create', 'edit']])
+                       ->once();
+        }
+
+        return $routerMock;
     }
 }

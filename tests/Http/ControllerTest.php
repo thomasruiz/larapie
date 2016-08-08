@@ -89,7 +89,7 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig(['resources' => ['model_stub' => ['model' => NotFoundModelStub::class]]]);
         $this->mockRouteName('model_stub.show');
-        $this->mockJsonResponse($expected = null, 404);
+        $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
         $controller = new Controller($this->request, $this->config, $this->responseFactory);
         $response = $controller->show();
@@ -139,7 +139,7 @@ class ControllerTest extends TestCase
         ]);
 
         $this->mockRouteName('model_stub.stub.store');
-        $this->mockJsonResponse($expected = null, 404);
+        $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
         $controller = new Controller($this->request, $this->config, $this->responseFactory);
         $response = $controller->store();
@@ -189,7 +189,7 @@ class ControllerTest extends TestCase
         ]);
 
         $this->mockRouteName('model_stub.stub.update');
-        $this->mockJsonResponse($expected = null, 404);
+        $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
         $controller = new Controller($this->request, $this->config, $this->responseFactory);
         $response = $controller->update();
@@ -206,7 +206,7 @@ class ControllerTest extends TestCase
         ]);
 
         $this->mockRouteName('model_stub.update');
-        $this->mockJsonResponse($expected = null, 404);
+        $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
         $controller = new Controller($this->request, $this->config, $this->responseFactory);
         $response = $controller->update();
@@ -258,7 +258,7 @@ class ControllerTest extends TestCase
         ]);
 
         $this->mockRouteName('model_stub.destroy');
-        $this->mockJsonResponse($expected = null, 404);
+        $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
         $controller = new Controller($this->request, $this->config, $this->responseFactory);
         $response = $controller->destroy();

@@ -77,3 +77,4 @@ And everything is ready!
 - [ ] JWT bundled in
 - [ ] Pagination, ordering and filters on `index` route
 - [ ] Use of Laravel Policies
+- [ ] Custom error messages

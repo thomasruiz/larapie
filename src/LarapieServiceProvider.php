@@ -3,6 +3,7 @@
 namespace Larapie;
 
 use Illuminate\Support\ServiceProvider;
+use Larapie\Config\ConfigNormalizer;
 use Larapie\Http\Routing;
 
 class LarapieServiceProvider extends ServiceProvider
@@ -24,7 +25,7 @@ class LarapieServiceProvider extends ServiceProvider
                 return;
             }
 
-            $routing = new Routing($this->app->make('router'));
+            $routing = new Routing($this->app->make('router'), new ConfigNormalizer());
             $normalizedConfig = $routing->registerRoutes($larapieConfig);
 
             $config->set('larapie', $normalizedConfig);

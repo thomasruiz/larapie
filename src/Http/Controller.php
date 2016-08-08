@@ -204,7 +204,7 @@ class Controller extends BaseController
 
     protected function notFound()
     {
-        return $this->responseFactory->json(null, 404);
+        return $this->responseFactory->json(['error' => 'Not Found'], 404);
     }
 
     protected function respond($model, $code)
