@@ -248,14 +248,16 @@ class Controller extends BaseController
     {
         $resourceConfig = $this->config['resources'][ $resourceName ];
 
-        if (isset($resourceConfig['requests']) && isset($resourceConfig['requests'][ $route ])) {
-            $this->request = $this->container->make($resourceConfig['requests'][ $route ]);
-        } elseif (isset($resourceConfig['request'])) {
-            $this->request = $this->container->make($resourceConfig['request']);
-        }
+        if (in_array($route, ['store', 'update'])) {
+            if (isset($resourceConfig['requests']) && isset($resourceConfig['requests'][ $route ])) {
+                $this->request = $this->container->make($resourceConfig['requests'][ $route ]);
+            } elseif (isset($resourceConfig['request'])) {
+                $this->request = $this->container->make($resourceConfig['request']);
+            }
 
-        if ($this->request instanceof ValidatesWhenResolved) {
-            $this->request->validate();
+            if ($this->request instanceof ValidatesWhenResolved) {
+                $this->request->validate();
+            }
         }
     }
 }

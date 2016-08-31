@@ -64,6 +64,12 @@ return [
       // All the rest is optional
       
       'disable_routing' => true, // default to false
+      'request' => App\Http\Requests\FooRequest::class, // will run for routes store and update
+      'requests' => [
+        // Further customization
+        'store' => App\Http\Requests\Foo\StoreRequest::class,
+        'update' => App\Http\Requests\Foo\UpdateRequest::class,
+      ],
       'router_options' => [
         'only' => ['index', 'show'],
         'middleware' => ['auth'],
