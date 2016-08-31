@@ -6,6 +6,16 @@ use Larapie\LarapieException;
 
 class ConfigNormalizer
 {
+
+    public function normalizeGroupConfig($config)
+    {
+        if (! isset($config['group'])) {
+            $config['group'] = [];
+        }
+
+        return $config;
+    }
+
     public function checkResourceName($resourceName, $config)
     {
         $parents = explode('.', $resourceName);

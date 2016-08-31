@@ -19,13 +19,31 @@ class Routing
 
     public function registerRoutes($config)
     {
+        $config = $this->configNormalizer->normalizeGroupConfig($config);
+
+        $this->router->group($config['group'], function () use (&$config) {
+            $config = $this->registerResources($config);
+        });
+
+        return $config;
+    }
+
+    protected function registerResources($config)
+    {
         foreach ($config['resources'] as $resource => &$resourceConfig) {
-            $this->configNormalizer->checkResourceName($resource, $config['resources']);
-            $resourceConfig = $this->configNormalizer->normalizeResourceConfig($resourceConfig);
+            $resourceConfig = $this->normalizeConfig($config, $resource, $resourceConfig);
             $this->registerResource($resource, $resourceConfig);
         }
 
         return $config;
+    }
+
+    protected function normalizeConfig($config, $resource, $resourceConfig)
+    {
+        $this->configNormalizer->checkResourceName($resource, $config['resources']);
+        $resourceConfig = $this->configNormalizer->normalizeResourceConfig($resourceConfig);
+
+        return $resourceConfig;
     }
 
     protected function registerResource($resource, $config)

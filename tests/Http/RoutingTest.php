@@ -16,9 +16,9 @@ class RoutingTest extends TestCase
     {
         $config = ['resources' => ['user' => stdClass::class, 'foo' => stdClass::class]];
         $routerMock = $this->mockRouter($config);
-        $configNormalizerMock = new ConfigNormalizer();
+        $configNormalizer = new ConfigNormalizer();
 
-        $routing = new Routing($routerMock, $configNormalizerMock);
+        $routing = new Routing($routerMock, $configNormalizer);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertEquals(
@@ -42,9 +42,9 @@ class RoutingTest extends TestCase
     {
         $config = ['resources' => ['user' => stdClass::class, 'user.foo' => stdClass::class]];
         $routerMock = $this->mockRouter($config);
-        $configNormalizerMock = new ConfigNormalizer();
+        $configNormalizer = new ConfigNormalizer();
 
-        $routing = new Routing($routerMock, $configNormalizerMock);
+        $routing = new Routing($routerMock, $configNormalizer);
         $normalizedConfig = $routing->registerRoutes($config);
 
         $this->assertEquals(
@@ -75,25 +75,45 @@ class RoutingTest extends TestCase
                 ],
             ],
         ];
-        $routerMock = Mockery::mock(Router::class);
-        $configNormalizerMock = new ConfigNormalizer();
 
-        $routing = new Routing($routerMock, $configNormalizerMock);
+        $configNormalizer = new ConfigNormalizer();
+        $routerMock = Mockery::mock(Router::class);
+        $this->mockRouterGroup($routerMock, $config);
+
+        $routing = new Routing($routerMock, $configNormalizer);
         $normalizedConfig = $routing->registerRoutes($config);
 
-        $this->assertSame($config, $normalizedConfig);
+        $this->assertEquals($config + ['group' => []], $normalizedConfig);
     }
 
     protected function mockRouter($config)
     {
         $routerMock = Mockery::mock(Router::class);
+        $this->mockRouterGroup($routerMock, $config);
+        $this->mockRouterResources($config, $routerMock);
 
+        return $routerMock;
+    }
+
+    protected function mockRouterGroup($routerMock, $config)
+    {
+        $routerMock->shouldReceive('group')
+                   ->with(isset($config['group']) ? $config['group'] : [], Mockery::on(
+                       function ($callback) use ($config) {
+                           $callback($config);
+
+                           return true;
+                       })
+                   )
+                   ->once();
+    }
+
+    protected function mockRouterResources($config, $routerMock)
+    {
         foreach ($config['resources'] as $resource => $value) {
             $routerMock->shouldReceive('resource')
                        ->with($resource, Controller::class, ['except' => ['create', 'edit']])
                        ->once();
         }
-
-        return $routerMock;
     }
 }
