@@ -2,7 +2,9 @@
 
 namespace Larapie\Http;
 
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Config\Repository;
+use Illuminate\Contracts\Validation\ValidatesWhenResolved;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Routing\ResponseFactory;
@@ -11,9 +13,12 @@ use Larapie\Contracts\TransformableContract;
 
 class Controller extends BaseController
 {
+    /** @var Request */
     private $request;
 
     private $config;
+
+    private $container;
 
     private $responseFactory;
 
@@ -23,19 +28,17 @@ class Controller extends BaseController
 
     private $resourceName;
 
-    public function __construct(Request $request, Repository $config, ResponseFactory $responseFactory)
+    public function __construct(Container $container, Repository $config, ResponseFactory $responseFactory)
     {
-        $this->request = $request;
         $this->config = $config->get('larapie');
+        $this->container = $container;
         $this->responseFactory = $responseFactory;
-
-        if ($request->route()) {
-            $this->resolveModelAndParents();
-        }
     }
 
     public function index()
     {
+        $this->resolveRequest();
+
         $collection = $this->findCollection();
 
         return $this->respond($collection, 200);
@@ -43,6 +46,8 @@ class Controller extends BaseController
 
     public function show()
     {
+        $this->resolveRequest();
+
         $model = $this->findModelInHierarchy();
 
         if ($model === null) {
@@ -54,6 +59,8 @@ class Controller extends BaseController
 
     public function store()
     {
+        $this->resolveRequest();
+
         if (count($this->parents)) {
             $parent = $this->findLastParent();
 
@@ -71,6 +78,8 @@ class Controller extends BaseController
 
     public function update()
     {
+        $this->resolveRequest();
+
         $model = $this->findModelInHierarchy();
 
         if ($model === null) {
@@ -84,6 +93,8 @@ class Controller extends BaseController
 
     public function destroy()
     {
+        $this->resolveRequest();
+
         $model = $this->findModelInHierarchy();
 
         if (! $model) {
@@ -93,57 +104,6 @@ class Controller extends BaseController
         $model->delete();
 
         return $this->responseFactory->json(null, 204);
-    }
-
-    protected function resolveModelAndParents()
-    {
-        $routeParts = $this->resolveModel();
-        $this->resolveParents($routeParts);
-    }
-
-    protected function resolveModel()
-    {
-        $routeParts = $this->extractRouteParts();
-
-        // Removing "index", "show",...
-        array_pop($routeParts);
-
-        if (isset($this->config['group']['as'])) {
-            array_shift($routeParts);
-        }
-
-        if (isset($this->config['group']['prefix'])) {
-            array_shift($routeParts);
-        }
-
-        $this->resourceName = $this->resolveResourceName($routeParts);
-        $this->model = $this->resolveModelFromResourceName(implode('.', $routeParts));
-
-        return $routeParts;
-    }
-
-    protected function resolveParents($routeParts)
-    {
-        array_pop($routeParts);
-
-        if (count($routeParts)) {
-            $this->parents = $routeParts;
-        }
-    }
-
-    protected function extractRouteParts()
-    {
-        return explode('.', $this->request->route()->getName());
-    }
-
-    protected function resolveResourceName($routeParts)
-    {
-        return $routeParts[ count($routeParts) - 1 ];
-    }
-
-    protected function resolveModelFromResourceName($resourceName)
-    {
-        return $this->config['resources'][ $resourceName ]['model'];
     }
 
     protected function applyTransformer($transformable)
@@ -220,5 +180,82 @@ class Controller extends BaseController
         $transformed = $this->applyTransformer($model);
 
         return $this->responseFactory->json($transformed, $code);
+    }
+
+    private function resolveRequest()
+    {
+        $this->request = $this->container->make('request');
+
+        if ($this->request->route()) {
+            $this->resolveModelAndParents();
+        }
+    }
+
+    protected function resolveModelAndParents()
+    {
+        $routeParts = $this->resolveModel();
+        $this->resolveParents($routeParts);
+    }
+
+    protected function resolveModel()
+    {
+        $routeParts = $this->extractRouteParts();
+
+        // Removing "index", "show",...
+        $route = array_pop($routeParts);
+
+        if (isset($this->config['group']['as'])) {
+            array_shift($routeParts);
+        }
+
+        if (isset($this->config['group']['prefix'])) {
+            array_shift($routeParts);
+        }
+
+        $indexInConfig = implode('.', $routeParts);
+        $this->resolveResourceName($routeParts);
+        $this->resolveModelFromConfig($indexInConfig);
+        $this->resolveRequestFromConfig($indexInConfig, $route);
+
+        return $routeParts;
+    }
+
+    protected function resolveParents($routeParts)
+    {
+        array_pop($routeParts);
+
+        if (count($routeParts)) {
+            $this->parents = $routeParts;
+        }
+    }
+
+    protected function extractRouteParts()
+    {
+        return explode('.', $this->request->route()->getName());
+    }
+
+    protected function resolveResourceName($routeParts)
+    {
+        $this->resourceName = $routeParts[ count($routeParts) - 1 ];
+    }
+
+    protected function resolveModelFromConfig($resourceName)
+    {
+        $this->model = $this->config['resources'][ $resourceName ]['model'];
+    }
+
+    protected function resolveRequestFromConfig($resourceName, $route)
+    {
+        $resourceConfig = $this->config['resources'][ $resourceName ];
+
+        if (isset($resourceConfig['requests']) && isset($resourceConfig['requests'][ $route ])) {
+            $this->request = $this->container->make($resourceConfig['requests'][ $route ]);
+        } elseif (isset($resourceConfig['request'])) {
+            $this->request = $this->container->make($resourceConfig['request']);
+        }
+
+        if ($this->request instanceof ValidatesWhenResolved) {
+            $this->request->validate();
+        }
     }
 }

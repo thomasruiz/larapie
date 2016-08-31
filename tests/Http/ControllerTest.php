@@ -3,6 +3,7 @@
 namespace LarapieTests\Http;
 
 use Illuminate\Config\Repository;
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Http\Request;
 use Illuminate\Routing\ResponseFactory;
 use Larapie\Http\Controller;
@@ -17,12 +18,17 @@ class ControllerTest extends TestCase
 
     private $config;
 
+    private $container;
+
     public function setUp()
     {
         parent::setUp();
-        $this->request = Mockery::mock(Request::class);
         $this->config = Mockery::mock(Repository::class);
+        $this->request = Mockery::mock(Request::class);
+        $this->container = Mockery::mock(Container::class);
         $this->responseFactory = Mockery::mock(ResponseFactory::class);
+
+        $this->container->shouldReceive('make')->with('request')->andReturn($this->request);
     }
 
     public function testIndexWithSimpleResource()
@@ -31,7 +37,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.index');
         $this->mockJsonResponse($expected = 'all');
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->index();
 
         $this->assertSame($expected, $response);
@@ -49,7 +55,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.model_stub.index');
         $this->mockJsonResponse($expected = 'children');
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->index();
 
         $this->assertSame($expected, $response);
@@ -61,7 +67,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.show');
         $this->mockJsonResponse($expected = Mockery::type(ModelStub::class));
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->show();
 
         $this->assertSame($expected, $response);
@@ -79,7 +85,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.model_stub.show');
         $this->mockJsonResponse($expected = Mockery::type(ModelStub::class));
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->show();
 
         $this->assertSame($expected, $response);
@@ -91,7 +97,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.show');
         $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->show();
 
         $this->assertSame($expected, $response);
@@ -104,7 +110,7 @@ class ControllerTest extends TestCase
         $this->mockJsonResponse($expected = 'new model', 201);
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->store();
 
         $this->assertSame($expected, $response);
@@ -123,7 +129,7 @@ class ControllerTest extends TestCase
         $this->mockJsonResponse($expected = 'new model', 201);
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->store();
 
         $this->assertSame($expected, $response);
@@ -141,7 +147,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.stub.store');
         $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->store();
 
         $this->assertSame($expected, $response);
@@ -154,7 +160,7 @@ class ControllerTest extends TestCase
         $this->mockJsonResponse($expected = Mockery::type(ModelStub::class));
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -173,7 +179,7 @@ class ControllerTest extends TestCase
         $this->mockJsonResponse($expected = Mockery::type(ModelStub::class));
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -191,7 +197,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.stub.update');
         $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -208,7 +214,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.update');
         $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -225,7 +231,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.destroy');
         $this->mockJsonResponse($expected = null, 204);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->destroy();
 
         $this->assertSame($expected, $response);
@@ -243,7 +249,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('stub.model_stub.destroy');
         $this->mockJsonResponse($expected = null, 204);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->destroy();
 
         $this->assertSame($expected, $response);
@@ -260,7 +266,7 @@ class ControllerTest extends TestCase
         $this->mockRouteName('model_stub.destroy');
         $this->mockJsonResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->request, $this->config, $this->responseFactory);
+        $controller = new Controller($this->container, $this->config, $this->responseFactory);
         $response = $controller->destroy();
 
         $this->assertSame($expected, $response);
