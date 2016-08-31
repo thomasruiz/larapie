@@ -108,6 +108,14 @@ class Controller extends BaseController
         // Removing "index", "show",...
         array_pop($routeParts);
 
+        if (isset($this->config['group']['as'])) {
+            array_shift($routeParts);
+        }
+
+        if (isset($this->config['group']['prefix'])) {
+            array_shift($routeParts);
+        }
+
         $this->resourceName = $this->resolveResourceName($routeParts);
         $this->model = $this->resolveModelFromResourceName(implode('.', $routeParts));
 
