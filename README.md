@@ -19,7 +19,7 @@ composer require thomasruiz/larapie
 After installing, add the service provider to your `config/app.php` file
 
 ```php
-Larapie\LarapieServiceProvider::class
+Larapie\LarapieServiceProvider::class,
 ```
 
 Add the default `larapie.php` configuration file
@@ -34,8 +34,16 @@ php artisan vendor:publish --provider=Larapie\\LarapieServiceProvider
 
 ```php
 // config/larapie.php
+<?php
 
 return [
+  // Group configuration (optional)
+  'group' => [
+    'as'         => 'api.',
+    'domain'     => 'api.domain.com',
+    'middleware' => 'api',
+  ],
+
   'resources' => [
     // Generates:
     // GET /user
@@ -64,7 +72,7 @@ return [
     
     // WON'T WORK, 'bar' model is unknown
     'bar.foo' => App\Foo::class,
-  ]
+  ],
 ];
 ```
 
