@@ -2,39 +2,38 @@
 
 namespace Larapie\Http;
 
-use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Config\Repository;
-use Illuminate\Contracts\Validation\ValidatesWhenResolved;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 
 class Controller extends BaseController
 {
-    /** @var Request */
-    private $request;
-
     private $config;
-
-    private $container;
 
     private $responseFactory;
 
-    private $parents;
+    private $requestResolver;
 
-    private $model;
+    /**
+     * @var \Illuminate\Http\Request
+     */
+    private $request;
 
-    private $resourceName;
+    /**
+     * @var \Larapie\Http\ModelResource
+     */
+    private $resource;
 
-    public function __construct(Container $container, Repository $config, ResponseFactory $responseFactory)
+    public function __construct(Repository $config, ResponseFactory $responseFactory, RequestResolver $requestResolver)
     {
         $this->config = $config->get('larapie');
-        $this->container = $container;
         $this->responseFactory = $responseFactory;
+        $this->requestResolver = $requestResolver;
     }
 
     public function index()
     {
-        $this->resolveRequest();
+        $this->request = $this->requestResolver->resolve();
+        $this->resource = $this->requestResolver->getResource();
 
         $collection = $this->findCollection();
 
@@ -43,7 +42,8 @@ class Controller extends BaseController
 
     public function show()
     {
-        $this->resolveRequest();
+        $this->request = $this->requestResolver->resolve();
+        $this->resource = $this->requestResolver->getResource();
 
         $model = $this->findModelInHierarchy();
 
@@ -56,18 +56,19 @@ class Controller extends BaseController
 
     public function store()
     {
-        $this->resolveRequest();
+        $this->request = $this->requestResolver->resolve();
+        $this->resource = $this->requestResolver->getResource();
 
-        if (count($this->parents)) {
+        if (count($this->resource->getParents())) {
             $parent = $this->findLastParent();
 
             if ($parent === null) {
                 return $this->notFound();
             }
 
-            $model = $parent->{str_plural($this->resourceName)}()->create($this->request->all());
+            $model = $parent->{str_plural($this->resource->getName())}()->create($this->request->all());
         } else {
-            $model = call_user_func([$this->model, 'create'], $this->request->all());
+            $model = call_user_func([$this->resource->getModel(), 'create'], $this->request->all());
         }
 
         return $this->responseFactory->respond($model, 201);
@@ -75,7 +76,8 @@ class Controller extends BaseController
 
     public function update()
     {
-        $this->resolveRequest();
+        $this->request = $this->requestResolver->resolve();
+        $this->resource = $this->requestResolver->getResource();
 
         $model = $this->findModelInHierarchy();
 
@@ -90,7 +92,8 @@ class Controller extends BaseController
 
     public function destroy()
     {
-        $this->resolveRequest();
+        $this->request = $this->requestResolver->resolve();
+        $this->resource = $this->requestResolver->getResource();
 
         $model = $this->findModelInHierarchy();
 
@@ -105,13 +108,13 @@ class Controller extends BaseController
 
     protected function findCollection()
     {
-        if (count($this->parents) > 0) {
+        if (count($this->resource->getParents()) > 0) {
             $lastParent = $this->findLastParent();
-            $collection = $lastParent->{str_plural($this->resourceName)};
+            $collection = $lastParent->{str_plural($this->resource->getName())};
 
             return $collection;
         } else {
-            $collection = call_user_func([$this->model, 'all']);
+            $collection = call_user_func([$this->resource->getModel(), 'all']);
 
             return $collection;
         }
@@ -119,9 +122,11 @@ class Controller extends BaseController
 
     protected function findLastParent()
     {
-        $parent = array_shift($this->parents);
+        $parents = $this->resource->getParents();
+
+        $parent = array_shift($parents);
         $lastParent = $this->findModel($this->config['resources'][ $parent ]['model'], $parent);
-        foreach ($this->parents as $parent) {
+        foreach ($parents as $parent) {
             $lastParent = $lastParent->{str_plural($parent)}()->find($this->request->route($parent));
         }
 
@@ -130,19 +135,19 @@ class Controller extends BaseController
 
     protected function findModelInHierarchy()
     {
-        if (count($this->parents)) {
+        if (count($this->resource->getParents())) {
             $parent = $this->findLastParent();
 
             if ($parent === null) {
                 return null;
             }
 
-            $caller = $parent->{str_plural($this->resourceName)}();
+            $caller = $parent->{str_plural($this->resource->getName())}();
         } else {
-            $caller = $this->model;
+            $caller = $this->resource->getModel();
         }
 
-        return $this->findModel($caller, $this->resourceName);
+        return $this->findModel($caller, $this->resource->getName());
     }
 
     protected function findModel($model, $resourceName)
@@ -157,90 +162,11 @@ class Controller extends BaseController
         return $this->responseFactory->respond(['error' => 'Not Found'], 404);
     }
 
-    private function resolveRequest()
-    {
-        $this->request = $this->container->make('request');
-
-        if ($this->request->route()) {
-            $this->resolveModelAndParents();
-        }
-    }
-
-    protected function resolveModelAndParents()
-    {
-        $routeParts = $this->resolveModel();
-        $this->resolveParents($routeParts);
-    }
-
-    protected function resolveModel()
-    {
-        $routeParts = $this->extractRouteParts();
-
-        // Removing "index", "show",...
-        $route = array_pop($routeParts);
-
-        if (isset($this->config['group']['as'])) {
-            array_shift($routeParts);
-        }
-
-        if (isset($this->config['group']['prefix'])) {
-            array_shift($routeParts);
-        }
-
-        $indexInConfig = implode('.', $routeParts);
-        $this->resolveResourceName($routeParts);
-        $this->resolveModelFromConfig($indexInConfig);
-        $this->resolveRequestFromConfig($indexInConfig, $route);
-
-        return $routeParts;
-    }
-
-    protected function resolveParents($routeParts)
-    {
-        array_pop($routeParts);
-
-        if (count($routeParts)) {
-            $this->parents = $routeParts;
-        }
-    }
-
-    protected function extractRouteParts()
-    {
-        return explode('.', $this->request->route()->getName());
-    }
-
-    protected function resolveResourceName($routeParts)
-    {
-        $this->resourceName = $routeParts[ count($routeParts) - 1 ];
-    }
-
-    protected function resolveModelFromConfig($resourceName)
-    {
-        $this->model = $this->config['resources'][ $resourceName ]['model'];
-    }
-
-    protected function resolveRequestFromConfig($resourceName, $route)
-    {
-        $resourceConfig = $this->config['resources'][ $resourceName ];
-
-        if (in_array($route, ['store', 'update'])) {
-            if (isset($resourceConfig['requests']) && isset($resourceConfig['requests'][ $route ])) {
-                $this->request = $this->container->make($resourceConfig['requests'][ $route ]);
-            } elseif (isset($resourceConfig['request'])) {
-                $this->request = $this->container->make($resourceConfig['request']);
-            }
-
-            if ($this->request instanceof ValidatesWhenResolved) {
-                $this->request->validate();
-            }
-        }
-    }
-
     protected function findIdInRoute($resourceName)
     {
         $id = $this->request->route($resourceName)
             ?: $this->request->route(str_plural($resourceName))
-            ?: $this->request->route(str_singular($resourceName));
+                ?: $this->request->route(str_singular($resourceName));
 
         return $id;
     }
