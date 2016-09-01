@@ -7,6 +7,7 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Validation\ValidatesWhenResolved;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Routing\ResourceRegistrar;
 use Illuminate\Routing\ResponseFactory;
 use Illuminate\Support\Collection;
 use Larapie\Contracts\TransformableContract;
@@ -167,7 +168,9 @@ class Controller extends BaseController
 
     protected function findModel($model, $resourceName)
     {
-        return call_user_func([$model, 'find'], $this->request->route($resourceName));
+        $id = $this->findIdInRoute($resourceName);
+
+        return call_user_func([$model, 'find'], $id);
     }
 
     protected function notFound()
@@ -259,5 +262,14 @@ class Controller extends BaseController
                 $this->request->validate();
             }
         }
+    }
+
+    protected function findIdInRoute($resourceName)
+    {
+        $id = $this->request->route($resourceName)
+            ?: $this->request->route(str_plural($resourceName))
+            ?: $this->request->route(str_singular($resourceName));
+
+        return $id;
     }
 }
