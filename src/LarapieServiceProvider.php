@@ -25,7 +25,7 @@ class LarapieServiceProvider extends ServiceProvider
                 return;
             }
 
-            $routing = new Routing($this->app->make('router'), new ConfigNormalizer());
+            $routing = $this->app->make(Routing::class);;
             $normalizedConfig = $routing->registerRoutes($larapieConfig);
 
             $config->set('larapie', $normalizedConfig);
