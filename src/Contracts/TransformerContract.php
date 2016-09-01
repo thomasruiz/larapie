@@ -2,14 +2,12 @@
 
 namespace Larapie\Contracts;
 
-use Illuminate\Database\Eloquent\Model;
-
 interface TransformerContract
 {
     /**
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param \Larapie\Contracts\TransformableContract $model
      *
      * @return array
      */
-    public function transform(Model $model);
+    public function transform(TransformableContract $model);
 }

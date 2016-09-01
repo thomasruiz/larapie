@@ -7,10 +7,6 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Validation\ValidatesWhenResolved;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
-use Illuminate\Routing\ResourceRegistrar;
-use Illuminate\Routing\ResponseFactory;
-use Illuminate\Support\Collection;
-use Larapie\Contracts\TransformableContract;
 
 class Controller extends BaseController
 {
@@ -42,7 +38,7 @@ class Controller extends BaseController
 
         $collection = $this->findCollection();
 
-        return $this->respond($collection, 200);
+        return $this->responseFactory->respond($collection, 200);
     }
 
     public function show()
@@ -55,7 +51,7 @@ class Controller extends BaseController
             return $this->notFound();
         }
 
-        return $this->respond($model, 200);
+        return $this->responseFactory->respond($model, 200);
     }
 
     public function store()
@@ -74,7 +70,7 @@ class Controller extends BaseController
             $model = call_user_func([$this->model, 'create'], $this->request->all());
         }
 
-        return $this->respond($model, 201);
+        return $this->responseFactory->respond($model, 201);
     }
 
     public function update()
@@ -89,7 +85,7 @@ class Controller extends BaseController
 
         $model->update($this->request->all());
 
-        return $this->respond($model, 200);
+        return $this->responseFactory->respond($model, 200);
     }
 
     public function destroy()
@@ -104,24 +100,7 @@ class Controller extends BaseController
 
         $model->delete();
 
-        return $this->responseFactory->json(null, 204);
-    }
-
-    protected function applyTransformer($transformable)
-    {
-        if ($transformable instanceof Collection) {
-            return $transformable->map(function ($model) {
-                return $this->applyTransformer($model);
-            });
-        }
-
-        if ($transformable instanceof TransformableContract) {
-            $transformer = $transformable->getTransformerClass();
-
-            return $transformer->transform($transformable);
-        }
-
-        return $transformable;
+        return $this->responseFactory->respond(null, 204);
     }
 
     protected function findCollection()
@@ -175,14 +154,7 @@ class Controller extends BaseController
 
     protected function notFound()
     {
-        return $this->responseFactory->json(['error' => 'Not Found'], 404);
-    }
-
-    protected function respond($model, $code)
-    {
-        $transformed = $this->applyTransformer($model);
-
-        return $this->responseFactory->json($transformed, $code);
+        return $this->responseFactory->respond(['error' => 'Not Found'], 404);
     }
 
     private function resolveRequest()

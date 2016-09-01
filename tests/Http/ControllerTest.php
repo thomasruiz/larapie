@@ -5,8 +5,8 @@ namespace LarapieTests\Http;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Http\Request;
-use Illuminate\Routing\ResponseFactory;
 use Larapie\Http\Controller;
+use Larapie\Http\ResponseFactory;
 use LarapieTests\TestCase;
 use Mockery;
 
@@ -284,7 +284,7 @@ class ControllerTest extends TestCase
 
     protected function mockJsonResponse($expected, $code = 200)
     {
-        return $this->responseFactory->shouldReceive('json')->with($expected, $code)->once()->andReturn($expected);
+        return $this->responseFactory->shouldReceive('respond')->with($expected, $code)->once()->andReturn($expected);
     }
 
     protected function mockRequestAll($expected)
