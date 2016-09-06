@@ -4,6 +4,7 @@ namespace LarapieTests\Http;
 
 use Illuminate\Contracts\Routing\ResponseFactory as LaravelResponseFactory;
 use Illuminate\Support\Collection;
+use Larapie\Contracts\DirectTransformableContract;
 use Larapie\Contracts\TransformableContract;
 use Larapie\Contracts\TransformerContract;
 use Larapie\Http\ResponseFactory;
@@ -41,6 +42,19 @@ class ResponseFactoryTest extends TestCase
         $expected = 'transformed';
 
         $this->mockLaravelResponse(['model' => 'transformed'], 200, $expected);
+
+        $responseFactory = new ResponseFactory($this->factoryMock);
+        $response = $responseFactory->respond($input);
+
+        $this->assertSame($response, $expected);
+    }
+
+    public function testRespondWithADirectTransformable()
+    {
+        $input = new DirectTransformableStub();
+        $expected = 'transformed';
+
+        $this->mockLaravelResponse(['transformed'], 200, $expected);
 
         $responseFactory = new ResponseFactory($this->factoryMock);
         $response = $responseFactory->respond($input);
@@ -114,6 +128,14 @@ class TransformableStub implements TransformableContract
     public function getTransformerClass()
     {
         return new TransformerStub;
+    }
+}
+
+class DirectTransformableStub implements DirectTransformableContract
+{
+    public function directTransform()
+    {
+        return ['transformed'];
     }
 }
 

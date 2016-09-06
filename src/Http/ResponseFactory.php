@@ -4,6 +4,7 @@ namespace Larapie\Http;
 
 use Illuminate\Contracts\Routing\ResponseFactory as LaravelResponseFactory;
 use Illuminate\Support\Collection;
+use Larapie\Contracts\DirectTransformableContract;
 use Larapie\Contracts\TransformableContract;
 
 class ResponseFactory
@@ -49,6 +50,10 @@ class ResponseFactory
 
         if ($transformable instanceof TransformableContract) {
             return $this->transformTransformable($transformable);
+        }
+
+        if ($transformable instanceof DirectTransformableContract) {
+            return $transformable->directTransform();
         }
 
         return $transformable;
