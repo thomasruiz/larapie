@@ -33,7 +33,7 @@ class RequestResolver
      * RequestResolver constructor.
      *
      * @param \Illuminate\Contracts\Container\Container $container
-     * @param \Illuminate\Contracts\Config\Repository   $config
+     * @param \Illuminate\Contracts\Config\Repository $config
      */
     public function __construct(Container $container, Repository $config)
     {
@@ -87,10 +87,6 @@ class RequestResolver
         if (isset($this->config['group']['as'])) {
             array_shift($routeParts);
         }
-
-        if (isset($this->config['group']['prefix'])) {
-            array_shift($routeParts);
-        }
     }
 
     /**
@@ -104,7 +100,8 @@ class RequestResolver
         $name = $this->resolveResourceName($routeParts);
         $model = $this->resolveModelFromConfig($configName);
         $parents = $this->resolveParents($routeParts);
-        $resource = new ModelResource($parents, $model, $name);
+        $authorization = $this->resolveAuthorizationFromConfig($configName);
+        $resource = new ModelResource($parents, $model, $name, $authorization);
 
         return $resource;
     }
@@ -116,7 +113,7 @@ class RequestResolver
      */
     protected function resolveResourceName($routeParts)
     {
-        return $routeParts[ count($routeParts) - 1 ];
+        return $routeParts[count($routeParts) - 1];
     }
 
     /**
@@ -126,7 +123,22 @@ class RequestResolver
      */
     protected function resolveModelFromConfig($resourceName)
     {
-        return $this->config['resources'][ $resourceName ]['model'];
+        return $this->config['resources'][$resourceName]['model'];
+    }
+
+    /**
+     * @param string $resourceName
+     *
+     * @return bool
+     */
+    protected function resolveAuthorizationFromConfig($resourceName)
+    {
+        $authorization = isset($this->config['group']['authorization']) && $this->config['group']['authorization'];
+        if (isset($this->config['resources'][$resourceName]['authorization'])) {
+            $authorization = $this->config['resources'][$resourceName]['authorization'];
+        }
+
+        return $authorization;
     }
 
     /**
@@ -150,11 +162,11 @@ class RequestResolver
      */
     protected function resolveRequestFromConfig($resourceName, $route, Request $request)
     {
-        $resourceConfig = $this->config['resources'][ $resourceName ];
+        $resourceConfig = $this->config['resources'][$resourceName];
 
         if (in_array($route, ['store', 'update'])) {
             if ($this->hasCustomRequestsForRoute($route, $resourceConfig)) {
-                $request = $this->container->make($resourceConfig['requests'][ $route ]);
+                $request = $this->container->make($resourceConfig['requests'][$route]);
             } elseif ($this->hasCustomRequestForResource($resourceConfig)) {
                 $request = $this->container->make($resourceConfig['request']);
             }
@@ -169,13 +181,13 @@ class RequestResolver
 
     /**
      * @param string $route
-     * @param array  $resourceConfig
+     * @param array $resourceConfig
      *
      * @return bool
      */
     protected function hasCustomRequestsForRoute($route, $resourceConfig)
     {
-        return isset($resourceConfig['requests']) && isset($resourceConfig['requests'][ $route ]);
+        return isset($resourceConfig['requests']) && isset($resourceConfig['requests'][$route]);
     }
 
     /**

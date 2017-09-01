@@ -20,17 +20,24 @@ class ModelResource
     private $name;
 
     /**
+     * @var bool
+     */
+    private $authorization;
+
+    /**
      * ModelResource constructor.
      *
-     * @param array  $parents
+     * @param array $parents
      * @param string $model
      * @param string $name
+     * @param bool $authorization
      */
-    public function __construct($parents, $model, $name)
+    public function __construct($parents, $model, $name, $authorization)
     {
         $this->parents = $parents;
         $this->model = $model;
         $this->name = $name;
+        $this->authorization = $authorization;
     }
 
     /**
@@ -55,5 +62,13 @@ class ModelResource
     public function getName()
     {
         return $this->name;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasAuthorization()
+    {
+        return $this->authorization;
     }
 }

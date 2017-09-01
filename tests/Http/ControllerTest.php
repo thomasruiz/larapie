@@ -2,7 +2,9 @@
 
 namespace LarapieTests\Http;
 
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Config\Repository;
+use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Http\Request;
 use Larapie\Http\Controller;
 use Larapie\Http\ModelResource;
@@ -15,6 +17,8 @@ class ControllerTest extends TestCase
 {
     private $config;
 
+    private $gate;
+
     private $responseFactory;
 
     private $requestResolver;
@@ -26,6 +30,7 @@ class ControllerTest extends TestCase
         parent::setUp();
         $this->request = Mockery::mock(Request::class);
         $this->config = Mockery::mock(Repository::class);
+        $this->gate = Mockery::mock(Gate::class);
         $this->responseFactory = Mockery::mock(ResponseFactory::class);
         $this->requestResolver = Mockery::mock(RequestResolver::class);
         $this->requestResolver->shouldReceive('resolve')->once()->withNoArgs()->andReturn($this->request);
@@ -35,10 +40,23 @@ class ControllerTest extends TestCase
     public function testIndexWithSimpleResource()
     {
         $this->mockConfig(['resources' => ['model_stub' => ['model' => ModelStub::class]]]);
-        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = 'all');
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
+        $response = $controller->index();
+
+        $this->assertSame($expected, $response);
+    }
+
+    public function testIndexWithSimpleUnauthorizedResource()
+    {
+        $this->mockConfig(['resources' => ['model_stub' => ['model' => ModelStub::class]]]);
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', true));
+        $this->mockGate(false);
+        $this->mockResponse($expected = ['error' => 'Unauthorized'], 403);
+
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->index();
 
         $this->assertSame($expected, $response);
@@ -48,15 +66,34 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'model_stub'            => ['model' => ModelStub::class],
+                'model_stub' => ['model' => ModelStub::class],
                 'model_stub.model_stub' => ['model' => ModelStub::class],
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = 'children');
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
+        $response = $controller->index();
+
+        $this->assertSame($expected, $response);
+    }
+
+    public function testIndexWithNestedUnauthorizedResource()
+    {
+        $this->mockConfig([
+            'resources' => [
+                'model_stub' => ['model' => ModelStub::class],
+                'model_stub.model_stub' => ['model' => ModelStub::class],
+            ],
+        ]);
+
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub', false));
+        $this->mockGate(false);
+        $this->mockResponse($expected = 'children');
+
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->index();
 
         $this->assertSame($expected, $response);
@@ -65,10 +102,10 @@ class ControllerTest extends TestCase
     public function testShowWithSimpleResource()
     {
         $this->mockConfig(['resources' => ['model_stub' => ['model' => ModelStub::class]]]);
-        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = Mockery::type(ModelStub::class));
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->show();
 
         $this->assertSame($expected, $response);
@@ -78,14 +115,14 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'model_stub'            => ['model' => ModelStub::class],
+                'model_stub' => ['model' => ModelStub::class],
                 'model_stub.model_stub' => ['model' => ModelStub::class],
             ],
         ]);
-        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = Mockery::type(ModelStub::class));
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->show();
 
         $this->assertSame($expected, $response);
@@ -94,10 +131,10 @@ class ControllerTest extends TestCase
     public function testShowNotFound()
     {
         $this->mockConfig(['resources' => ['model_stub' => ['model' => NotFoundModelStub::class]]]);
-        $this->mockRequestResource(new ModelResource([], NotFoundModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], NotFoundModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->show();
 
         $this->assertSame($expected, $response);
@@ -106,11 +143,11 @@ class ControllerTest extends TestCase
     public function testStoreWithSimpleResource()
     {
         $this->mockConfig(['resources' => ['model_stub' => ['model' => ModelStub::class]]]);
-        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = 'new model', 201);
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->store();
 
         $this->assertSame($expected, $response);
@@ -120,16 +157,16 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'model_stub'            => ['model' => ModelStub::class],
+                'model_stub' => ['model' => ModelStub::class],
                 'model_stub.model_stub' => ['model' => ModelStub::class],
             ],
         ]);
 
         $this->mockResponse($expected = 'new model', 201);
-        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub', false));
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->store();
 
         $this->assertSame($expected, $response);
@@ -139,15 +176,15 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'model_stub'      => ['model' => NotFoundModelStub::class],
+                'model_stub' => ['model' => NotFoundModelStub::class],
                 'model_stub.stub' => ['model' => ModelStub::class],
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'stub'));
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'stub', false));
         $this->mockResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->store();
 
         $this->assertSame($expected, $response);
@@ -156,11 +193,11 @@ class ControllerTest extends TestCase
     public function testUpdateWithSimpleResource()
     {
         $this->mockConfig(['resources' => ['model_stub' => ['model' => ModelStub::class]]]);
-        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = Mockery::type(ModelStub::class));
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -170,16 +207,16 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'model_stub'            => ['model' => ModelStub::class],
+                'model_stub' => ['model' => ModelStub::class],
                 'model_stub.model_stub' => ['model' => ModelStub::class],
             ],
         ]);
 
         $this->mockResponse($expected = Mockery::type(ModelStub::class));
-        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'model_stub', false));
         $this->mockRequestAll([]);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -189,15 +226,15 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'model_stub'      => ['model' => NotFoundModelStub::class],
+                'model_stub' => ['model' => NotFoundModelStub::class],
                 'model_stub.stub' => ['model' => ModelStub::class],
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'stub'));
+        $this->mockRequestResource(new ModelResource(['model_stub'], ModelStub::class, 'stub', false));
         $this->mockResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -211,10 +248,10 @@ class ControllerTest extends TestCase
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource([], NotFoundModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], NotFoundModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->update();
 
         $this->assertSame($expected, $response);
@@ -228,10 +265,10 @@ class ControllerTest extends TestCase
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = null, 204);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->destroy();
 
         $this->assertSame($expected, $response);
@@ -241,15 +278,15 @@ class ControllerTest extends TestCase
     {
         $this->mockConfig([
             'resources' => [
-                'stub'            => ['model' => ModelStub::class],
+                'stub' => ['model' => ModelStub::class],
                 'stub.model_stub' => ['model' => ModelStub::class],
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], ModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = null, 204);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->destroy();
 
         $this->assertSame($expected, $response);
@@ -263,10 +300,10 @@ class ControllerTest extends TestCase
             ],
         ]);
 
-        $this->mockRequestResource(new ModelResource([], NotFoundModelStub::class, 'model_stub'));
+        $this->mockRequestResource(new ModelResource([], NotFoundModelStub::class, 'model_stub', false));
         $this->mockResponse($expected = ['error' => 'Not Found'], 404);
 
-        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver);
+        $controller = new Controller($this->config, $this->responseFactory, $this->requestResolver, $this->gate);
         $response = $controller->destroy();
 
         $this->assertSame($expected, $response);
@@ -275,6 +312,14 @@ class ControllerTest extends TestCase
     protected function mockConfig($config)
     {
         return $this->config->shouldReceive('get')->with('larapie')->andReturn($config);
+    }
+
+    public function mockGate($authorized)
+    {
+        $method = $this->gate->shouldReceive('authorize')->once()->with('view', [ModelStub::class]);
+        if (! $authorized) {
+            $method->andThrow(new AuthorizationException());
+        }
     }
 
     protected function mockResponse($expected, $code = 200)
@@ -331,5 +376,30 @@ class NotFoundModelStub
     public static function find()
     {
         return null;
+    }
+}
+
+class PolicyStub
+{
+    static public $expectation = true;
+
+    public function index()
+    {
+        return static::$expectation;
+    }
+
+    public function show()
+    {
+        return static::$expectation;
+    }
+
+    public function update()
+    {
+        return static::$expectation;
+    }
+
+    public function delete()
+    {
+        return static::$expectation;
     }
 }

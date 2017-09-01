@@ -24,13 +24,13 @@ class RoutingTest extends TestCase
         $this->assertEquals(
             [
                 'user' => [
-                    'model'           => stdClass::class,
-                    'router_options'  => ['except' => ['create', 'edit']],
+                    'model' => stdClass::class,
+                    'router_options' => ['except' => ['create', 'edit']],
                     'disable_routing' => false,
                 ],
-                'foo'  => [
-                    'model'           => stdClass::class,
-                    'router_options'  => ['except' => ['create', 'edit']],
+                'foo' => [
+                    'model' => stdClass::class,
+                    'router_options' => ['except' => ['create', 'edit']],
                     'disable_routing' => false,
                 ],
             ],
@@ -49,14 +49,14 @@ class RoutingTest extends TestCase
 
         $this->assertEquals(
             [
-                'user'     => [
-                    'model'           => stdClass::class,
-                    'router_options'  => ['except' => ['create', 'edit']],
+                'user' => [
+                    'model' => stdClass::class,
+                    'router_options' => ['except' => ['create', 'edit']],
                     'disable_routing' => false,
                 ],
                 'user.foo' => [
-                    'model'           => stdClass::class,
-                    'router_options'  => ['except' => ['create', 'edit']],
+                    'model' => stdClass::class,
+                    'router_options' => ['except' => ['create', 'edit']],
                     'disable_routing' => false,
                 ],
             ],
@@ -69,8 +69,8 @@ class RoutingTest extends TestCase
         $config = [
             'resources' => [
                 'user' => [
-                    'model'           => stdClass::class,
-                    'router_options'  => ['except' => ['create', 'edit']],
+                    'model' => stdClass::class,
+                    'router_options' => ['except' => ['create', 'edit']],
                     'disable_routing' => true,
                 ],
             ],
@@ -98,22 +98,22 @@ class RoutingTest extends TestCase
     protected function mockRouterGroup($routerMock, $config)
     {
         $routerMock->shouldReceive('group')
-                   ->with(isset($config['group']) ? $config['group'] : [], Mockery::on(
-                       function ($callback) use ($config) {
-                           $callback($config);
+            ->with(isset($config['group']) ? $config['group'] : [], Mockery::on(
+                function ($callback) use ($config) {
+                    $callback($config);
 
-                           return true;
-                       })
-                   )
-                   ->once();
+                    return true;
+                })
+            )
+            ->once();
     }
 
     protected function mockRouterResources($config, $routerMock)
     {
         foreach ($config['resources'] as $resource => $value) {
             $routerMock->shouldReceive('resource')
-                       ->with($resource, Controller::class, ['except' => ['create', 'edit']])
-                       ->once();
+                ->with($resource, Controller::class, ['except' => ['create', 'edit']])
+                ->once();
         }
     }
 }

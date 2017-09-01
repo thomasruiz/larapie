@@ -92,3 +92,4 @@ And everything is ready!
 - [ ] Pagination, ordering and filters on `index` route
 - [ ] Use of Laravel Policies
 - [ ] Custom error messages
+- [ ] /!\ Documentation

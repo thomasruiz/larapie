@@ -33,6 +33,7 @@ class RequestResolverTest extends TestCase
     {
         $config = new Repository($this->defaultConfig([
             'model' => 'Foo',
+            'authorization' => true,
         ]));
 
         $this->request->shouldReceive('route->getName')->andReturn('resource.index');
@@ -41,7 +42,7 @@ class RequestResolverTest extends TestCase
         $request = $resolver->resolve();
 
         $this->assertSame($this->request, $request);
-        $this->assertEquals(new ModelResource([], 'Foo', 'resource'), $resolver->getResource());
+        $this->assertEquals(new ModelResource([], 'Foo', 'resource', true), $resolver->getResource());
     }
 
     public function testResolveRequestWithFormRequest()
