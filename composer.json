@@ -29,5 +29,12 @@
         "psr-4": {
             "LarapieTests\\": "tests"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Larapie\\LarapieServiceProvider"
+            ]
+        }
     }
 }
