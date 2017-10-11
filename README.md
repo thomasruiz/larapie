@@ -16,7 +16,7 @@ Install from composer:
 composer require thomasruiz/larapie
 ```
 
-After installing, add the service provider to your `config/app.php` file
+After installing, add the service provider to your `config/app.php` file if you're not on Laravel 5.5:
 
 ```php
 Larapie\LarapieServiceProvider::class,
