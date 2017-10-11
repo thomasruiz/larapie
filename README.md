@@ -46,18 +46,18 @@ return [
 
   'resources' => [
     // Generates:
-    // GET /user
-    // GET /user/{id}
-    // POST /user
-    // PUT /user/{id}
-    // DELETE /user/{id}
-    'user' => App\User::class,
+    // GET /users
+    // GET /users/{user}
+    // POST /users
+    // PUT /users/{user}
+    // DELETE /users/{user}
+    'users' => App\User::class,
     
     // Relationship
-    'user.foo' => App\Foo::class,
+    'users.foos' => App\Foo::class,
     
     // More complex example
-    'foo' => [
+    'foos' => [
       // Mandatory
       'model' => App\Foo::class,
       
